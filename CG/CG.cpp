@@ -25,6 +25,8 @@
 
 #include "Cylinder.h"
 #include "Cube.h"
+#include "Quad.h"
+#include "Sphere.h"
 
 
 #include <thread>         // std::this_thread::sleep_for
@@ -65,15 +67,6 @@ int main() {
     // |>----------<>----------<>----------<>----------<>----------<|
 
     std::vector<Actor> actors;
-    //for(int i =0;i<10;i++)
-    //    for (int j = 0; j < 10; j++) {
-    //        Actor actor(Cylinder(50, 100, 16));
-    //        actor.setLocation(200 * i, 200 * j, 0);
-    //        actors.push_back(actor);
-    //        Actor actor2(Cube(50));
-    //        actor2.setLocation(200 * i, 200 * j, 500);
-    //        actors.push_back(actor2);
-    //    }
 
     // Position, Color, Texture Coordinates 
     unsigned int layout[]{ 3, GL_FLOAT,4,GL_FLOAT,2,GL_FLOAT };
@@ -157,6 +150,8 @@ int main() {
 
     float rotation_angle = 0;
 
+    //glViewport(0, 0, 1920, 1080); 
+    camera.SetProjection(1920, 1080, 10);
 
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
@@ -194,7 +189,7 @@ int main() {
 
 
         static std::string selected;
-        std::vector<std::string> items = { "Cube", "Cylinder" };
+        std::vector<std::string> items = { "Cube", "Cylinder", "Quad", "Sphere"};
         static int item_current_idx = 0;                    // Here our selection data is an index.
         std::string combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically could be anything)(
         if (ImGui::BeginCombo("combo 1", combo_label.c_str()))
@@ -226,7 +221,19 @@ int main() {
             }
 
             else if (item_current_idx == 1) {
-                auto i = Actor(Cylinder(size,size*2,16));
+                auto i = Actor(Cylinder(size, size * 2, 16));
+                i.setLocation(transform[0], transform[1], transform[2]);
+                actors.push_back(i);
+
+            }
+            else if (item_current_idx == 2) {
+                auto i = Actor(Quad());
+                i.setLocation(transform[0], transform[1], transform[2]);
+                actors.push_back(i);
+
+            }
+            else if (item_current_idx == 3) {
+                auto i = Actor(Sphere());
                 i.setLocation(transform[0], transform[1], transform[2]);
                 actors.push_back(i);
 
@@ -339,6 +346,7 @@ GLFWwindow* create_GLFWwindow(float width, float height, std::string title){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, false);
 
     // full screen 
     GLFWmonitor* MyMonitor = glfwGetPrimaryMonitor(); // The primary monitor.. Later Occulus?..
@@ -347,7 +355,7 @@ GLFWwindow* create_GLFWwindow(float width, float height, std::string title){
     SCR_WIDTH = mode->width;
     SCR_HEIGHT = mode->height;
     std::cout << "Monitor width: " << SCR_WIDTH << "\theight: " << SCR_HEIGHT << std::endl;
-
+    
 
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, title.c_str(), glfwGetPrimaryMonitor(), NULL);
     if (window == NULL) {
@@ -358,10 +366,10 @@ GLFWwindow* create_GLFWwindow(float width, float height, std::string title){
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); 
 
-    //glViewport(0, 0, 1920, 1080);
+    
 
 
-    glfwSetFramebufferSizeCallback(window, size_callback); // we bind callback to our size_callback func. 
+    //glfwSetFramebufferSizeCallback(window, size_callback); // we bind callback to our size_callback func. 
     glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetCursorEnterCallback(window, cursor_enter_callback);
     glfwSetKeyCallback(window, key_callback);
