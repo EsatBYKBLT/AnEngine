@@ -4,7 +4,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 
 #include <string>
 #include <iostream>
@@ -16,7 +15,6 @@
 #include "IndexBuffer.h"
 
 #include "Actor.h"
-
 #include "Camera.h"
 
 #include "imgui.h"
@@ -27,7 +25,7 @@
 #include "Cube.h"
 #include "Quad.h"
 #include "Sphere.h"
-
+#include "Texture.h"
 
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
@@ -43,6 +41,7 @@ void init_glad();
 
 Camera camera; 
 Shader shader; 
+
 
 
 static double lastX = 0, lastY = 0; // Mouse
@@ -82,34 +81,17 @@ int main() {
     // |>----------<>----------<>----------<>----------<>----------<|
     // |>                         TEXTURE                          <|
     // |>----------<>----------<>----------<>----------<>----------<|
+    Texture horse("res/horse-face.png"), face("res/tears-of-joy.png");
 
-    // load and create a texture 
-    unsigned int texture1;
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // default texture unit is 0 but we have minimum 16 unit for binding texture
+    Texture::setActiveTexture(GL_TEXTURE0); 
+    face.bind();
 
-
-    // load image, create texture and generate mipmaps
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char* data = stbi_load("res/horse-face.png", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-    shader.SetUniform1i("texture1", 0);
-
+    shader.SetUniform1i("texture1", 0); 
+    // GL_TEXTURE0 -> the unit 0 
+    // GL_TEXTURE5 -> the unit 5 
+    // ...
+    
     // enable blending 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -146,7 +128,7 @@ int main() {
 
     va.Bind();
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     float rotation_angle = 0;
 
@@ -167,7 +149,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); 
 
         for (auto& i : actors)
-            i.setRotation(glm::vec3(0, rotation_angle, 0));
+            i.transform.setRotation(glm::vec3(0, rotation_angle, 0));
 
         for(auto& i :actors)
             drawActor(i,vb,ib);
@@ -214,7 +196,7 @@ int main() {
         if (ImGui::Button("Generate mesh")) {
             if (item_current_idx == 0) {
                 auto i = Actor(Cube(size));
-                i.setLocation(transform[0],transform[1], transform[2]);
+                i.transform.setLocation(transform[0],transform[1], transform[2]);
                 actors.push_back(i);
                 
 
@@ -222,19 +204,19 @@ int main() {
 
             else if (item_current_idx == 1) {
                 auto i = Actor(Cylinder(size, size * 2, 16));
-                i.setLocation(transform[0], transform[1], transform[2]);
+                i.transform.setLocation(transform[0], transform[1], transform[2]);
                 actors.push_back(i);
 
             }
             else if (item_current_idx == 2) {
                 auto i = Actor(Quad());
-                i.setLocation(transform[0], transform[1], transform[2]);
+                i.transform.setLocation(transform[0], transform[1], transform[2]);
                 actors.push_back(i);
 
             }
             else if (item_current_idx == 3) {
                 auto i = Actor(Sphere());
-                i.setLocation(transform[0], transform[1], transform[2]);
+                i.transform.setLocation(transform[0], transform[1], transform[2]);
                 actors.push_back(i);
 
             }
@@ -243,6 +225,11 @@ int main() {
 
 
         ImGui::Text(selected.c_str());
+
+        if (ImGui::Button("face texture"))
+            face.bind();
+        if (ImGui::Button("horse texture"))
+            horse.bind();
 
 
         ImGui::End();
@@ -266,7 +253,7 @@ void drawActor(Actor& actor, VertexBuffer& vb, IndexBuffer& ib) {
     vb.SetBufferData(actor.getPoints().data(), sizeof(float) * actor.getPoints().size());
     ib.SetBufferData(actor.getIndicies().data(), sizeof(unsigned int) * actor.getIndicies().size());
 
-    model = actor.modelMatrix();
+    model = actor.transform.getTransform();
     glm::mat4 mvp = camera.GetCameraMatrix() * model;
     shader.setUniformMat4f("u_MVP", mvp);
 
