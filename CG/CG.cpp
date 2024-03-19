@@ -17,15 +17,16 @@
 #include "Actor.h"
 #include "Camera.h"
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include "UI.h"
+#include "Renderer.h"
 
 #include "Cylinder.h"
 #include "Cube.h"
 #include "Quad.h"
 #include "Sphere.h"
 #include "Texture.h"
+
+
 
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
@@ -41,7 +42,7 @@ void init_glad();
 
 Camera camera; 
 Shader shader; 
-
+Renderer renderer;
 
 
 static double lastX = 0, lastY = 0; // Mouse
@@ -53,10 +54,10 @@ glm::mat4 proj, view, model;
 float currentFrame, lastFrame, deltaTime;
 
 
-int main() {
-    GLFWwindow* window = create_GLFWwindow(SCR_WIDTH, SCR_HEIGHT, SCR_TITLE);
-    init_glad();
 
+int main() {
+    GLFWwindow* window = //create_GLFWwindow(SCR_WIDTH, SCR_HEIGHT, SCR_TITLE);
+        renderer.init("An Engine");
     shader.Compile();
     shader.Bind();
 
@@ -66,6 +67,7 @@ int main() {
     // |>----------<>----------<>----------<>----------<>----------<|
 
     std::vector<Actor> actors;
+    actors.push_back(Actor(Quad()));
 
     // Position, Color, Texture Coordinates 
     unsigned int layout[]{ 3, GL_FLOAT,4,GL_FLOAT,2,GL_FLOAT };
@@ -102,23 +104,11 @@ int main() {
     // |>----------<>----------<>----------<>----------<>----------<|
     camera = Camera(35, SCR_WIDTH, SCR_HEIGHT);
 
-
-
     // |>----------<>----------<>----------<>----------<>----------<|
     // |>                          ImGUI                           <|
     // |>----------<>----------<>----------<>----------<>----------<|
-
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 440");
-    //ImGui variables: 
-    //bool show_demo_window = true;
-    //bool show_another_window = false;
-    float clear_color[]{ 0.1f, 0.1f, 0.1f, 1.00f };
-
-
-
+    UI ui;
+    ui.init(window);
 
     // |>----------<>----------<>----------<>----------<>----------<|
     // |>                       RENDER LOOP                        <|
@@ -144,9 +134,8 @@ int main() {
 
         processInput(window);
         
-        // clear
-        glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); 
+        renderer.setClearColor(0.5,0.5,0.5,1.0 );
+        renderer.clear();
 
         for (auto& i : actors)
             i.transform.setRotation(glm::vec3(0, rotation_angle, 0));
@@ -154,92 +143,7 @@ int main() {
         for(auto& i :actors)
             drawActor(i,vb,ib);
 
-
-        // render imgui
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        ImGui::Begin("test");
-        //ImGui::ColorEdit4("bg color", clear_color);
-        //ImGui::DragFloat("Rotation", &rotation_angle);
-        static float transform[3]{ 0,0,0 };
-        static float size = 100;
-        ImGui::InputFloat3("Transform", transform);
-        ImGui::InputFloat("Size", &size);
-
-
-
-        static std::string selected;
-        std::vector<std::string> items = { "Cube", "Cylinder", "Quad", "Sphere"};
-        static int item_current_idx = 0;                    // Here our selection data is an index.
-        std::string combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically could be anything)(
-        if (ImGui::BeginCombo("combo 1", combo_label.c_str()))
-        {
-            for (int n = 0; n < items.size(); n++)
-            {
-                const bool is_selected = (item_current_idx == n);
-                if (ImGui::Selectable(items[n].c_str(), is_selected)) {
-                    item_current_idx = n;
-                    std::cout << items[n] << std::endl;
-                    selected = items[n];
-                }
-                // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                if (is_selected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-
-
-
-        if (ImGui::Button("Generate mesh")) {
-            if (item_current_idx == 0) {
-                auto i = Actor(Cube(size));
-                i.transform.setLocation(transform[0],transform[1], transform[2]);
-                actors.push_back(i);
-                
-
-            }
-
-            else if (item_current_idx == 1) {
-                auto i = Actor(Cylinder(size, size * 2, 16));
-                i.transform.setLocation(transform[0], transform[1], transform[2]);
-                actors.push_back(i);
-
-            }
-            else if (item_current_idx == 2) {
-                auto i = Actor(Quad());
-                i.transform.setLocation(transform[0], transform[1], transform[2]);
-                actors.push_back(i);
-
-            }
-            else if (item_current_idx == 3) {
-                auto i = Actor(Sphere());
-                i.transform.setLocation(transform[0], transform[1], transform[2]);
-                actors.push_back(i);
-
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));
-        }
-
-
-        ImGui::Text(selected.c_str());
-
-        if (ImGui::Button("face texture"))
-            face.bind();
-        if (ImGui::Button("horse texture"))
-            horse.bind();
-
-
-        ImGui::End();
-
-
-
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+        ui.render();
 
 
         glfwSwapBuffers(window);
@@ -324,55 +228,6 @@ void size_callback(GLFWwindow* window, int width, int height) {
     //glViewport(0, 0, width, height);
 }
 
-GLFWwindow* create_GLFWwindow(float width, float height, std::string title){
-    // |>----------<>----------<>----------<>----------<>----------<|
-    // |>                    CREATE GLFW WINDOW                    <|
-    // |>----------<>----------<>----------<>----------<>----------<|
-
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, false);
-
-    // full screen 
-    GLFWmonitor* MyMonitor = glfwGetPrimaryMonitor(); // The primary monitor.. Later Occulus?..
-
-    const GLFWvidmode* mode = glfwGetVideoMode(MyMonitor);
-    SCR_WIDTH = mode->width;
-    SCR_HEIGHT = mode->height;
-    std::cout << "Monitor width: " << SCR_WIDTH << "\theight: " << SCR_HEIGHT << std::endl;
-    
-
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, title.c_str(), glfwGetPrimaryMonitor(), NULL);
-    if (window == NULL) {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        //return EXIT_FAILURE;
-    }
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); 
-
-    
-
-
-    //glfwSetFramebufferSizeCallback(window, size_callback); // we bind callback to our size_callback func. 
-    glfwSetCursorPosCallback(window, cursor_position_callback);
-    glfwSetCursorEnterCallback(window, cursor_enter_callback);
-    glfwSetKeyCallback(window, key_callback);
-
-
-    //https://www.glfw.org/docs/3.3/input_guide.html#cursor_standard
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-
-    return window;
-}
-
-
-
-
-
 // |>----------<>----------<>----------<>----------<>----------<|
 // |>                          MOUSE                           <|
 // |>----------<>----------<>----------<>----------<>----------<|
@@ -402,16 +257,90 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 
-void init_glad(){
-    // |>----------<>----------<>----------<>----------<>----------<|
-    // |>               LOAD OPENGL FUNCTION POINTERS              <|
-    // |>----------<>----------<>----------<>----------<>----------<|
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-}
 
 
+
+//// render imgui
+//ImGui_ImplOpenGL3_NewFrame();
+//ImGui_ImplGlfw_NewFrame();
+//ImGui::NewFrame();
+
+//ImGui::Begin("test");
+////ImGui::ColorEdit4("bg color", clear_color);
+////ImGui::DragFloat("Rotation", &rotation_angle);
+//static float transform[3]{ 0,0,0 };
+//static float size = 100;
+//ImGui::InputFloat3("Transform", transform);
+//ImGui::InputFloat("Size", &size);
+
+
+
+//static std::string selected;
+//std::vector<std::string> items = { "Cube", "Cylinder", "Quad", "Sphere"};
+//static int item_current_idx = 0;                    // Here our selection data is an index.
+//std::string combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically could be anything)(
+//if (ImGui::BeginCombo("combo 1", combo_label.c_str()))
+//{
+//    for (int n = 0; n < items.size(); n++)
+//    {
+//        const bool is_selected = (item_current_idx == n);
+//        if (ImGui::Selectable(items[n].c_str(), is_selected)) {
+//            item_current_idx = n;
+//            std::cout << items[n] << std::endl;
+//            selected = items[n];
+//        }
+//        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+//        if (is_selected)
+//            ImGui::SetItemDefaultFocus();
+//    }
+//    ImGui::EndCombo();
+//}
+
+
+
+//if (ImGui::Button("Generate mesh")) {
+//    if (item_current_idx == 0) {
+//        auto i = Actor(Cube(size));
+//        i.transform.setLocation(transform[0],transform[1], transform[2]);
+//        actors.push_back(i);
+//        
+
+//    }
+
+//    else if (item_current_idx == 1) {
+//        auto i = Actor(Cylinder(size, size * 2, 16));
+//        i.transform.setLocation(transform[0], transform[1], transform[2]);
+//        actors.push_back(i);
+
+//    }
+//    else if (item_current_idx == 2) {
+//        auto i = Actor(Quad());
+//        i.transform.setLocation(transform[0], transform[1], transform[2]);
+//        actors.push_back(i);
+
+//    }
+//    else if (item_current_idx == 3) {
+//        auto i = Actor(Sphere());
+//        i.transform.setLocation(transform[0], transform[1], transform[2]);
+//        actors.push_back(i);
+
+//    }
+//    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+//}
+
+
+//ImGui::Text(selected.c_str());
+
+//if (ImGui::Button("face texture"))
+//    face.bind();
+//if (ImGui::Button("horse texture"))
+//    horse.bind();
+
+
+//ImGui::End();
+
+
+
+
+//ImGui::Render();
+//ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
