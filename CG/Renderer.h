@@ -27,10 +27,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 class Renderer
 {
 public:
+    Shader* shader{};
+    Camera* camera{};
+    GLFWwindow* window{};
 
-    Shader* shader;
-    Camera camera;
-    GLFWwindow* window;
+    VertexArray* va{};
+    VertexBuffer* vb{};
+    IndexBuffer* ib{};
+
 
     float SCR_WIDTH = 640, SCR_HEIGHT = 480;
     glm::mat4 model;
@@ -38,8 +42,35 @@ public:
     GLFWwindow* init(std::string SCR_TITLE) {
 		window = create_GLFWwindow(SCR_WIDTH, SCR_HEIGHT, SCR_TITLE);
 		init_glad();
+
+        va = new VertexArray();     va->Bind();
+        vb = new VertexBuffer();    vb->Bind();
+        ib = new IndexBuffer();     ib->Bind();
+
+        // Position, Color, Texture Coordinates 
+        unsigned int layout[]{ 3, GL_FLOAT,4,GL_FLOAT,2,GL_FLOAT };
+        vb->setLayout(layout, sizeof(layout));
+
+        camera = new Camera(35.0f, SCR_WIDTH, SCR_HEIGHT);
+
+        shader = new Shader();
+        shader->Compile("basic.shader");
+        shader->Bind();
+
+
         return window;
 	}
+
+    void terminate() {
+        ib->Unbind(); delete ib; ib = nullptr;
+        vb->Unbind(); delete vb; vb = nullptr;
+        va->Unbind(); delete va; va = nullptr;
+
+        delete camera; camera = nullptr;
+
+        delete shader; shader = nullptr;
+
+    }
 
 
 
@@ -100,6 +131,18 @@ public:
 
     }
 
+    void setShader(Shader* shader) {
+        this->shader = shader;
+        shader->Bind();
+    }
+    Shader* getShader() { return shader; }
+
+    void setVertexArray(VertexArray* va) { this->va = va; va->Bind(); }
+    void setVertexBuffer(VertexBuffer* vb) { this->vb = vb; vb->Bind(); }
+    void setIndexBuffer(IndexBuffer* ib) { this->ib = ib; ib->Bind(); }
+    void setCamera(Camera* camera) { this->camera = camera; }
+
+
     void setClearColor(float r, float g, float b, float a) {
         glClearColor(r, g, b, a);
     }
@@ -109,14 +152,30 @@ public:
     void clear() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
+    
     void enableBlending() {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
+    void enableDepthTest() {
+        glEnable(GL_DEPTH_TEST);
+    }
 
-    //void drawActor(Actor& actor){
-    //    drawActor(actor, vb, ib);
-    //}
+    void updateTransform() {
+        glm::mat4 mvp = camera->GetCameraMatrix() * model;
+        shader->setUniformMat4f("u_MVP", mvp);
+    }
+
+    void drawActor(Actor& actor){
+        vb->SetBufferData(actor.getPoints().data(), sizeof(float) * actor.getPoints().size());
+        ib->SetBufferData(actor.getIndicies().data(), sizeof(unsigned int) * actor.getIndicies().size());
+
+        model = actor.transform.getTransform();
+        glm::mat4 mvp = camera->GetCameraMatrix() * model;
+        shader->setUniformMat4f("u_MVP", mvp);
+
+        glDrawElements(GL_TRIANGLES, actor.getIndicies().size(), GL_UNSIGNED_INT, 0);
+    }
 
     //void drawActor(Actor& actor, VertexBuffer& vb, IndexBuffer& ib) {
     //    vb.SetBufferData(actor.getPoints().data(), sizeof(float) * actor.getPoints().size());

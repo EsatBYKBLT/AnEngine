@@ -8,17 +8,12 @@
 #include <string>
 #include <iostream>
 #include <vector>
-
-#include "Shader.h"
-#include "VertexArray.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
-
-#include "Actor.h"
-#include "Camera.h"
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
 
 #include "UI.h"
 #include "Renderer.h"
+#include "Engine.h"
 
 #include "Cylinder.h"
 #include "Cube.h"
@@ -27,141 +22,70 @@
 #include "Texture.h"
 
 
-
-#include <thread>         // std::this_thread::sleep_for
-#include <chrono>         // std::chrono::seconds
-
-void drawActor(Actor& actor, VertexBuffer& vb, IndexBuffer& ib);
 void processInput(GLFWwindow* window);
-void size_callback(GLFWwindow* window, int width, int height);
-void cursor_enter_callback(GLFWwindow* window, int entered);
-void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
-GLFWwindow* create_GLFWwindow(float width, float height, std::string title);
-void init_glad();
-
-
-Camera camera; 
-Shader shader; 
 Renderer renderer;
-
+Engine engine;
 
 static double lastX = 0, lastY = 0; // Mouse
 
-float SCR_WIDTH = 640, SCR_HEIGHT = 480;
-std::string SCR_TITLE = "My 3D App";
-
-glm::mat4 proj, view, model;
-float currentFrame, lastFrame, deltaTime;
-
-
-
 int main() {
-    GLFWwindow* window = //create_GLFWwindow(SCR_WIDTH, SCR_HEIGHT, SCR_TITLE);
-        renderer.init("An Engine");
-    shader.Compile();
-    shader.Bind();
-
-
-    // |>----------<>----------<>----------<>----------<>----------<|
-    // |>                      DEFINE VERTICES                     <|
-    // |>----------<>----------<>----------<>----------<>----------<|
+    renderer.init("An Engine");
 
     std::vector<Actor> actors;
     actors.push_back(Actor(Quad()));
 
-    // Position, Color, Texture Coordinates 
-    unsigned int layout[]{ 3, GL_FLOAT,4,GL_FLOAT,2,GL_FLOAT };
-
-    VertexArray va; va.Bind();
-    VertexBuffer vb;// (actor1.getPoints().data(), sizeof(float) * actor1.getPoints().size());
-    IndexBuffer ib;// (actor1.getIndicies().data(), sizeof(unsigned int) * actor1.getIndicies().size());
-
-    vb.setLayout(layout,sizeof(layout));
-    va.Unbind();
-        
+    
 
     // |>----------<>----------<>----------<>----------<>----------<|
     // |>                         TEXTURE                          <|
     // |>----------<>----------<>----------<>----------<>----------<|
     Texture horse("res/horse-face.png"), face("res/tears-of-joy.png");
 
-    // default texture unit is 0 but we have minimum 16 unit for binding texture
     Texture::setActiveTexture(GL_TEXTURE0); 
     face.bind();
-
-    shader.SetUniform1i("texture1", 0); 
-    // GL_TEXTURE0 -> the unit 0 
-    // GL_TEXTURE5 -> the unit 5 
-    // ...
+    renderer.getShader()->SetUniform1i("texture1", 0);
     
-    // enable blending 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    renderer.enableBlending();
+    renderer.enableDepthTest();
+    //renderer.va->Bind();
 
 
-    // |>----------<>----------<>----------<>----------<>----------<|
-    // |>                          CAMERA                          <|
-    // |>----------<>----------<>----------<>----------<>----------<|
-    camera = Camera(35, SCR_WIDTH, SCR_HEIGHT);
-
-    // |>----------<>----------<>----------<>----------<>----------<|
-    // |>                          ImGUI                           <|
-    // |>----------<>----------<>----------<>----------<>----------<|
     UI ui;
-    ui.init(window);
+    ui.init(renderer.window);
 
     // |>----------<>----------<>----------<>----------<>----------<|
     // |>                       RENDER LOOP                        <|
     // |>----------<>----------<>----------<>----------<>----------<|
 
-    glEnable(GL_DEPTH_TEST);
 
-    va.Bind();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    float rotation_angle = 0;
 
-    //glViewport(0, 0, 1920, 1080); 
-    camera.SetProjection(1920, 1080, 10);
+    renderer.camera->SetProjection(1920, 1080, 10);
 
-    while (!glfwWindowShouldClose(window)) {
-        // per-frame time logic
-        // --------------------
-        float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+    while (!glfwWindowShouldClose(renderer.window)) {
+        engine.t(glfwGetTime()); //update time 
 
-        processInput(window);
+        processInput(renderer.window);
         
-        renderer.setClearColor(0.5,0.5,0.5,1.0 );
         renderer.clear();
 
         for (auto& i : actors)
-            i.transform.setRotation(glm::vec3(0, rotation_angle, 0));
+            i.transform.setRotation(glm::vec3(0, 0, 0));
 
-        for(auto& i :actors)
-            drawActor(i,vb,ib);
+        for (auto& i : actors) 
+            renderer.drawActor(i);
+        
 
         ui.render();
 
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(renderer.window);
         glfwPollEvents();
     }
 
-}
-
-
-void drawActor(Actor& actor, VertexBuffer& vb, IndexBuffer& ib) {
-    vb.SetBufferData(actor.getPoints().data(), sizeof(float) * actor.getPoints().size());
-    ib.SetBufferData(actor.getIndicies().data(), sizeof(unsigned int) * actor.getIndicies().size());
-
-    model = actor.transform.getTransform();
-    glm::mat4 mvp = camera.GetCameraMatrix() * model;
-    shader.setUniformMat4f("u_MVP", mvp);
-
-    glDrawElements(GL_TRIANGLES, actor.getIndicies().size(), GL_UNSIGNED_INT, 0);
+    renderer.terminate();
 }
 
 
@@ -193,7 +117,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void processInput(GLFWwindow* window){
 
-    float cameraSpeed = static_cast<float>(250 * deltaTime);
+    float cameraSpeed = static_cast<float>(250 * engine.time());
     glm::vec3 deltaLocation = glm::vec3(0.0f);
 
 
@@ -212,9 +136,9 @@ void processInput(GLFWwindow* window){
     else if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         deltaLocation += glm::vec3(0, -1, 0); // to down 
 
-    camera.Move(deltaLocation * cameraSpeed);
-    glm::mat4 mvp = camera.GetCameraMatrix() * model;
-    shader.setUniformMat4f("u_MVP", mvp);
+    renderer.camera->Move(deltaLocation * cameraSpeed);
+    //glm::mat4 mvp = renderer.camera->GetCameraMatrix() * model;
+    //renderer.getShader()->setUniformMat4f("u_MVP", mvp);
 }
 
 
@@ -231,6 +155,7 @@ void size_callback(GLFWwindow* window, int width, int height) {
 // |>----------<>----------<>----------<>----------<>----------<|
 // |>                          MOUSE                           <|
 // |>----------<>----------<>----------<>----------<>----------<|
+
 void cursor_enter_callback(GLFWwindow* window, int entered){
     if (entered){
         glfwGetCursorPos(window, &lastX, &lastY);
@@ -249,7 +174,7 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
     double mouseSensitivity = 0.2;
     double deltaX = (lastX - xpos) * mouseSensitivity;
     double deltaY = (lastY - ypos) * mouseSensitivity;
-    camera.Rotate(glm::vec3(deltaY, deltaX,  0));
+    renderer.camera->Rotate(glm::vec3(deltaY, deltaX,  0));
     lastX = xpos;
     lastY = ypos;
 

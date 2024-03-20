@@ -5,8 +5,8 @@
 #include <fstream>
 #include <sstream>
 
-void Shader::Compile(){
-    auto source = ParseShader("basic.shader");
+void Shader::Compile(const std::string filepath ) {
+    auto source = ParseShader(filepath);
     std::cout << "Vertex shader:\n" << std::endl;
     std::cout << source.VertexSource << std::endl << std::endl;
     std::cout << "Fragment shader:\n" << std::endl;

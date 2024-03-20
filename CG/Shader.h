@@ -21,7 +21,7 @@ class Shader
 	int GetUniformLocation(const std::string& name);
 
 public:
-	void Compile();
+	void Compile(const std::string filepath = "basic.shader");
 	void Bind();
 	void Unbind();
 
