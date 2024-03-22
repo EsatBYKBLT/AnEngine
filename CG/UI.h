@@ -9,20 +9,19 @@
 
 #include "Renderer.h"
 #include "Machine.h"
-
-
-
+#include "Texture.h"
 
 class UI
 {
-
-    float clear_color[4]{ .30,.30,.50, 1};
+    float clear_color_[4]{ .30,.30,.50, 1};
 
 public:
-    Renderer* renderer{};
-    Machine* machine{};
+    Renderer* renderer_{};
+    Machine* machine_{};
 
-	void init(GLFWwindow* window) {
+    Texture* texture;
+
+	void Init(GLFWwindow* window) {
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
         ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -33,22 +32,22 @@ public:
 	}
 
 
-    void render() {
+    void Render() {
 
         // render imgui
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        menuBar();
-        test1();
-        test2();
+        MenuBar();
+        Test1();
+        Test2();
 
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
-    void menuBar() {
+    void MenuBar() {
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("File")) {
                 if (ImGui::MenuItem("Create")) {
@@ -68,24 +67,25 @@ public:
         }
     }
 
-    void test1() {
+    void Test1() {
         ImGui::Begin("test");
 
-        if (ImGui::ColorEdit4("bg color", clear_color))
-            renderer->setClearColor(clear_color);
+        if (ImGui::ColorEdit4("bg color", clear_color_))
+            renderer_->setClearColor(clear_color_);
 
 
         ImGui::End();
     }
 
-    void test2() {
-        ImGui::Begin("test2");
+    void Test2() {
+        ImGui::Begin("OpenGL Texture Text");
+        ImGui::Text("pointer = %x", texture->getID());
+        ImGui::Text("size = %d x %d", 100, 100);
 
-        if (ImGui::ColorEdit4("bg color", clear_color))
-            renderer->setClearColor(clear_color);
-
+        ImGui::Image((void*)(intptr_t)texture->getID(), ImVec2(200,200), { 0, 1 }, { 1, 0 });//ImVec2(texture->getWidth(), texture->getHeight()), { 0, 1 }, { 1, 0 });
         ImGui::End();
     }
+
 };
 
 

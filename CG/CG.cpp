@@ -29,10 +29,22 @@ Engine engine;
 static double lastX = 0, lastY = 0; // Mouse
 
 int main() {
-    renderer.init("An Engine");
+    renderer.Init("An Engine");
 
     std::vector<Actor> actors;
-    actors.push_back(Actor(Quad()));
+    Actor a1, a2, a3, a4, a5;
+    a1 = Quad();
+    a2 = Cube(); 
+    a3 = Cylinder();
+    a4 = Sphere();
+    a1.transform.setLocation(000, 000, 0);
+    a2.transform.setLocation(000, 300, 0);
+    a3.transform.setLocation(300, 000, 0);
+    a4.transform.setLocation(300, 300, 0);
+    actors.push_back(a1);
+    actors.push_back(a2);
+    actors.push_back(a3);
+    actors.push_back(a4);
 
     
 
@@ -40,9 +52,14 @@ int main() {
     // |>                         TEXTURE                          <|
     // |>----------<>----------<>----------<>----------<>----------<|
     Texture horse("res/horse-face.png"), face("res/tears-of-joy.png");
+    
+    Image image(100,100);
+    image.fill(0xFF00FF00);
+    Texture generated(image);
 
     Texture::setActiveTexture(GL_TEXTURE0); 
     face.bind();
+    
     renderer.getShader()->SetUniform1i("texture1", 0);
     
     renderer.enableBlending();
@@ -50,8 +67,10 @@ int main() {
     //renderer.va->Bind();
 
 
+    //UI ui;
     UI ui;
-    ui.init(renderer.window);
+    ui.Init(renderer.window);
+    ui.texture = &face;
 
     // |>----------<>----------<>----------<>----------<>----------<|
     // |>                       RENDER LOOP                        <|
@@ -77,8 +96,20 @@ int main() {
         for (auto& i : actors) 
             renderer.drawActor(i);
         
+        static int counter{};
+        if (counter++ > 10) {
+            if (ui.texture == &face) {
+                ui.texture = &generated;
+                generated.bind();
+            }
+            else {
+                ui.texture = &face;
+                face.bind();
+            }
 
-        ui.render();
+            counter = 0;
+        }
+        ui.Render();
 
 
         glfwSwapBuffers(renderer.window);

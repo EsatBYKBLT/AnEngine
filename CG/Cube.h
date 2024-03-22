@@ -6,36 +6,38 @@ class Cube :
 {
 	void setCube(const float& size) {
 		vertices = {
-			Vertex(-size, -size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f),
-			Vertex( size, -size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f),
-			Vertex( size,  size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f),
-			Vertex(-size,  size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f),
+			Vertex(glm::vec3(-size, -size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 0.0f)),
+			Vertex(glm::vec3( size, -size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 0.0f)),
+			Vertex(glm::vec3( size,  size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 1.0f)),
+			Vertex(glm::vec3(-size,  size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 1.0f)),
 
-			Vertex(-size, -size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f),
-			Vertex( size, -size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f),
-			Vertex( size,  size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f),
-			Vertex(-size,  size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f),
+			Vertex(glm::vec3(-size, -size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 0.0f)),
+			Vertex(glm::vec3( size, -size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 0.0f)),
+			Vertex(glm::vec3( size,  size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 1.0f)),
+			Vertex(glm::vec3(-size,  size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 1.0f)),
 
-			Vertex(-size,  size , size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f),
-			Vertex(-size,  size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f),
-			Vertex(-size, -size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f),
-			Vertex(-size, -size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f),
+			Vertex(glm::vec3(-size,  size , size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 0.0f)),
+			Vertex(glm::vec3(-size,  size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 1.0f)),
+			Vertex(glm::vec3(-size, -size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 1.0f)),
+			Vertex(glm::vec3(-size, -size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 0.0f)),
 
-			Vertex( size,  size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f),
-			Vertex( size,  size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f),
-			Vertex( size, -size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f),
-			Vertex( size, -size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f),
+			Vertex(glm::vec3( size,  size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 0.0f)),
+			Vertex(glm::vec3( size,  size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 1.0f)),
+			Vertex(glm::vec3( size, -size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 1.0f)),
+			Vertex(glm::vec3( size, -size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 0.0f)),
 
-			Vertex(-size, -size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f),
-			Vertex( size, -size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f),
-			Vertex( size, -size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f),
-			Vertex(-size, -size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f),
+			Vertex(glm::vec3(-size, -size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 1.0f)),
+			Vertex(glm::vec3( size, -size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 1.0f)),
+			Vertex(glm::vec3( size, -size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 0.0f)),
+			Vertex(glm::vec3(-size, -size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 0.0f)),
 
-			Vertex(-size,  size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f),
-			Vertex( size,  size, -size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f),
-			Vertex( size,  size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f),
-			Vertex(-size,  size,  size, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f),
+			Vertex(glm::vec3(-size,  size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 1.0f)),
+			Vertex(glm::vec3( size,  size, -size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 1.0f)),
+			Vertex(glm::vec3( size,  size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 1.0f, 0.0f)),
+			Vertex(glm::vec3(-size,  size,  size), glm::vec3( 1.0f, 1.0f, 1.0f), glm::vec4(1,1,1,1), glm::vec2( 0.0f, 0.0f)),
 		};
+
+
 		// calculate indicies 
 		for (int i = 0; i < 6; i++) {
 			int offsset = i * 4;

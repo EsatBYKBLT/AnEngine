@@ -39,7 +39,7 @@ public:
     float SCR_WIDTH = 640, SCR_HEIGHT = 480;
     glm::mat4 model;
 
-    GLFWwindow* init(std::string SCR_TITLE) {
+    GLFWwindow* Init(std::string SCR_TITLE) {
 		window = create_GLFWwindow(SCR_WIDTH, SCR_HEIGHT, SCR_TITLE);
 		init_glad();
 
@@ -48,7 +48,15 @@ public:
         ib = new IndexBuffer();     ib->Bind();
 
         // Position, Color, Texture Coordinates 
-        unsigned int layout[]{ 3, GL_FLOAT,4,GL_FLOAT,2,GL_FLOAT };
+        unsigned int layout[]{ 
+            3, GL_FLOAT, // Position
+            3, GL_FLOAT, // Normal
+            4, GL_FLOAT, // Color
+            2, GL_FLOAT  // Texture
+        };
+
+
+
         vb->setLayout(layout, sizeof(layout));
 
         camera = new Camera(35.0f, SCR_WIDTH, SCR_HEIGHT);
