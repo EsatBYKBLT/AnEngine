@@ -3,13 +3,22 @@
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
 
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui_internal.h"
 
 #include "Renderer.h"
 #include "Machine.h"
 #include "Texture.h"
+
+#include "Cylinder.h"
+#include "Cube.h"
+#include "Quad.h"
+#include "Sphere.h"
 
 class UI
 {
@@ -18,6 +27,7 @@ class UI
 public:
     Renderer* renderer_{};
     Machine* machine_{};
+    Scene* scene{};
 
     Texture* texture;
 
@@ -40,9 +50,9 @@ public:
         ImGui::NewFrame();
 
         MenuBar();
-        Test1();
+        //Test1();
         Test2();
-
+        //generateMesh();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -82,10 +92,72 @@ public:
         ImGui::Text("pointer = %x", texture->getID());
         ImGui::Text("size = %d x %d", 100, 100);
 
-        ImGui::Image((void*)(intptr_t)texture->getID(), ImVec2(200,200), { 0, 1 }, { 1, 0 });//ImVec2(texture->getWidth(), texture->getHeight()), { 0, 1 }, { 1, 0 });
+        ImGui::Image((void*)(intptr_t)texture->getID(), ImVec2(600, 600), { 0, 1 }, { 1, 0 });//ImVec2(texture->getWidth(), texture->getHeight()), { 0, 1 }, { 1, 0 });
         ImGui::End();
     }
 
+    void generateMesh() {
+        ImGui::Begin("Generate Mesh");
+
+        static std::string selected;
+        std::vector<std::string> items = { "Cube", "Cylinder", "Quad", "Sphere"};
+        static int item_current_idx = 0;                    // Here our selection data is an index.
+        std::string combo_label = items[item_current_idx];  // Label to preview before opening the combo(technically could be anything)(
+        if (ImGui::BeginCombo("Mesh Type", combo_label.c_str()))
+        {
+            for (int n = 0; n < items.size(); n++)
+            {
+                const bool is_selected = (item_current_idx == n);
+                if (ImGui::Selectable(items[n].c_str(), is_selected)) {
+                    item_current_idx = n;
+                    std::cout << items[n] << std::endl;
+                    selected = items[n];
+                }
+                // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+
+        if (ImGui::Button("Generate mesh")) {
+            if (item_current_idx == 0) {
+                scene->add(Cube());   
+            }
+            else if (item_current_idx == 1) {
+                scene->add(Cylinder());
+            }
+            else if (item_current_idx == 2) {
+                scene->add(Quad());
+            }
+            else if (item_current_idx == 3) {
+                scene->add(Sphere());
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        }
+
+
+        ImGui::Text(selected.c_str());
+
+
+
+
+
+        ImGui::End();
+
+    }
+
+    //void rightClick() {
+    //    if (ImGui::GetIO().MouseClicked[1])
+    //    {
+    //        ImGuiContext& g = *GImGui;
+    //        if (g.OpenedPopupStack.size() > 0)
+    //            g.OpenedPopupStack.pop_back();
+
+    //        ImGui::OpenPopup("test");
+    //    }
+    //}
 };
 
 

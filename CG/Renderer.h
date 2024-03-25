@@ -12,9 +12,11 @@
 #include "Camera.h"
 
 #include "Actor.h"
+#include "Scene.h"
 
 #include <string>
 #include <iostream>
+
 
 void size_callback(GLFWwindow* window, int width, int height);
 void cursor_enter_callback(GLFWwindow* window, int entered);
@@ -185,17 +187,11 @@ public:
         glDrawElements(GL_TRIANGLES, actor.getIndicies().size(), GL_UNSIGNED_INT, 0);
     }
 
-    //void drawActor(Actor& actor, VertexBuffer& vb, IndexBuffer& ib) {
-    //    vb.SetBufferData(actor.getPoints().data(), sizeof(float) * actor.getPoints().size());
-    //    ib.SetBufferData(actor.getIndicies().data(), sizeof(unsigned int) * actor.getIndicies().size());
-
-    //    model = actor.transform.getTransform();
-    //    glm::mat4 mvp = camera.GetCameraMatrix() * model;
-    //    shader->setUniformMat4f("u_MVP", mvp);
-
-    //    glDrawElements(GL_TRIANGLES, actor.getIndicies().size(), GL_UNSIGNED_INT, 0);
-    //}
-
+    void drawScene(Scene& scene) {
+        for (Actor& i : scene.actors) {
+            drawActor(i);
+        }
+    }
 
 };
 

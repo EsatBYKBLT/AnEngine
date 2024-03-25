@@ -15,8 +15,7 @@ class Texture
     int width{};
     int height{};
     int nrChannels{};
-public:
-    Texture(Image& image) {
+    void generateTexture() {
         // load and create a texture 
         glGenTextures(1, &ID);
         glBindTexture(GL_TEXTURE_2D, ID);
@@ -26,7 +25,10 @@ public:
         // set texture filtering parameters
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+    }
+public:
+    Texture(Image& image) {
+        generateTexture();
 
         if (image.data) {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data);
@@ -36,26 +38,15 @@ public:
             height = image.height;
         }
         else {
-            std::cout << "Failed to load texture" << std::endl;
+            std::cout << "Failed to load image texture" << std::endl;
         }
 
     }
 	Texture(std::string path = "res/horse-face.png") {
-        // load and create a texture 
-        glGenTextures(1, &ID);
-        glBindTexture(GL_TEXTURE_2D, ID);
-        // set the texture wrapping parameters
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        // set texture filtering parameters
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+        generateTexture();
 
         // load image, create texture and generate mipmaps
-        //int width, height, nrChannels;
-        stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-        // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+        stbi_set_flip_vertically_on_load(true); 
         unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
         if (data) {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -67,6 +58,20 @@ public:
         stbi_image_free(data);
 
 	}
+
+    void loadImage(Image& image) {
+        glBindTexture(GL_TEXTURE_2D, ID);
+        if (image.data) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            width = image.width;
+            height = image.height;
+        }
+        else {
+            std::cout << "Failed to load image texture" << std::endl;
+        }
+    }
 
     static void setActiveTexture(unsigned int glTexture) {
         glActiveTexture(glTexture);

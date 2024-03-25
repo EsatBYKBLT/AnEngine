@@ -8,17 +8,12 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include <thread>         // std::this_thread::sleep_for
-#include <chrono>         // std::chrono::seconds
 
 #include "UI.h"
 #include "Renderer.h"
 #include "Engine.h"
+#include "Scene.h"
 
-#include "Cylinder.h"
-#include "Cube.h"
-#include "Quad.h"
-#include "Sphere.h"
 #include "Texture.h"
 
 
@@ -28,33 +23,80 @@ Engine engine;
 
 static double lastX = 0, lastY = 0; // Mouse
 
+void ERay(Image& image, float cx=-12, float cy=0, float cz=0) {
+    // x^2 + y^2 + z^2 = r^2
+    // rx = ax + bxt 
+    // ry = ay + byt 
+    // rz = az + bzt 
+
+    // t^2 (bx^2 + by^2 + bz^2) + t(2axbx+2ayby+2azbz)+(ax^2+ay^2+az^2-r^2) = 0
+
+    // t^2 (bx^2 + by^2 + bz^2) + t(2axbx+2ayby+2azbz)+(ax^2+ay^2+az^2-r^2) = 0
+    // a = (-5,0,0)  b = (1, -3 + j*0.01, -3 + i*0.01)
+    // 
+    float ax, ay, az;
+    float bx{}, by{}, bz{};
+    float a, b, c;
+    float t, Delta;
+    float r = 6;
+    ax = cx;
+    ay = cy;
+    az = cz; 
+
+    bx = 1;
+
+    //a = bx*bx + by*by + bz*bz;
+    //b = 2*(ax*bx + ay*by + az+bz);
+    //c = ax*ax + ay*ay + az*az - r*r;
+
+    //Delta = b*b - 4*a*c;
+
+    for (int i = 0; i < image.height; i++) {
+        //std::cout << by << " - " << bz << std::endl;
+
+        for (int j = 0; j < image.width; j++) {
+            by = ((float)j/image.width)*2 -1; // horizontal 
+            bz = ((float)i/image.height)*2 -1; // vertical 
+
+            a = bx * bx + by * by + bz * bz;
+            b = 2 * (ax * bx + ay * by + az + bz);
+            c = ax * ax + ay * ay + az * az - r * r;
+
+            Delta = b * b - 4 * a * c;
+
+
+
+            if(Delta>=0)
+                image.at(i, j) = 0xff00ff00;
+            else
+                image.at(i, j) = 0xff000000;
+
+
+        }
+    }
+
+
+}
+
 int main() {
     renderer.Init("An Engine");
 
-    std::vector<Actor> actors;
-    Actor a1, a2, a3, a4, a5;
-    a1 = Quad();
-    a2 = Cube(); 
-    a3 = Cylinder();
-    a4 = Sphere();
-    a1.transform.setLocation(000, 000, 0);
-    a2.transform.setLocation(000, 300, 0);
-    a3.transform.setLocation(300, 000, 0);
-    a4.transform.setLocation(300, 300, 0);
-    actors.push_back(a1);
-    actors.push_back(a2);
-    actors.push_back(a3);
-    actors.push_back(a4);
+    Scene scene;
+    Actor actors[]{ Quad(),Cube(),Cylinder(),Sphere() };
+    for (int i = 0; i < 4; i++) {
+        actors[i].transform.setLocation(i*300, 000, 0);
+        scene.add(actors[i]);
+    }
 
-    
 
     // |>----------<>----------<>----------<>----------<>----------<|
     // |>                         TEXTURE                          <|
     // |>----------<>----------<>----------<>----------<>----------<|
     Texture horse("res/horse-face.png"), face("res/tears-of-joy.png");
     
-    Image image(100,100);
-    image.fill(0xFF00FF00);
+    Image image(600,600);
+    ERay(image);
+    //image.fill(0xFF00FF00);
     Texture generated(image);
 
     Texture::setActiveTexture(GL_TEXTURE0); 
@@ -70,45 +112,53 @@ int main() {
     //UI ui;
     UI ui;
     ui.Init(renderer.window);
+    ui.scene = &scene;
     ui.texture = &face;
 
     // |>----------<>----------<>----------<>----------<>----------<|
     // |>                       RENDER LOOP                        <|
     // |>----------<>----------<>----------<>----------<>----------<|
-
-
-
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-
     renderer.camera->SetProjection(1920, 1080, 10);
+
+    ui.texture = &generated;
 
     while (!glfwWindowShouldClose(renderer.window)) {
         engine.t(glfwGetTime()); //update time 
 
         processInput(renderer.window);
-        
+       
         renderer.clear();
 
-        for (auto& i : actors)
-            i.transform.setRotation(glm::vec3(0, 0, 0));
+        renderer.drawScene(scene);
 
-        for (auto& i : actors) 
-            renderer.drawActor(i);
-        
-        static int counter{};
-        if (counter++ > 10) {
-            if (ui.texture == &face) {
-                ui.texture = &generated;
-                generated.bind();
-            }
-            else {
-                ui.texture = &face;
-                face.bind();
-            }
 
-            counter = 0;
-        }
+
+        static float ii = 0;
+        static float jj = 0;
+        ii+=0.1; jj += 0.1;
+        ERay(image,-24, sin(ii)*5, 0);
+        generated.loadImage(image);
+        //ui.texture = &generated;
+
+        face.bind();
+
+
+        //static int counter{};
+        //if (counter++ > 100) {
+        //    if (ui.texture == &face) {
+        //        ui.texture = &generated;
+        //        //generated.bind();
+        //    }
+        //    else {
+        //        ui.texture = &face;
+        //        //face.bind();
+        //    }
+
+        //    counter = 0;
+        //}
+
         ui.Render();
 
 
@@ -216,11 +266,6 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 
 
 
-//// render imgui
-//ImGui_ImplOpenGL3_NewFrame();
-//ImGui_ImplGlfw_NewFrame();
-//ImGui::NewFrame();
-
 //ImGui::Begin("test");
 ////ImGui::ColorEdit4("bg color", clear_color);
 ////ImGui::DragFloat("Rotation", &rotation_angle);
@@ -229,68 +274,6 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 //ImGui::InputFloat3("Transform", transform);
 //ImGui::InputFloat("Size", &size);
 
-
-
-//static std::string selected;
-//std::vector<std::string> items = { "Cube", "Cylinder", "Quad", "Sphere"};
-//static int item_current_idx = 0;                    // Here our selection data is an index.
-//std::string combo_label = items[item_current_idx];  // Label to preview before opening the combo (technically could be anything)(
-//if (ImGui::BeginCombo("combo 1", combo_label.c_str()))
-//{
-//    for (int n = 0; n < items.size(); n++)
-//    {
-//        const bool is_selected = (item_current_idx == n);
-//        if (ImGui::Selectable(items[n].c_str(), is_selected)) {
-//            item_current_idx = n;
-//            std::cout << items[n] << std::endl;
-//            selected = items[n];
-//        }
-//        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-//        if (is_selected)
-//            ImGui::SetItemDefaultFocus();
-//    }
-//    ImGui::EndCombo();
-//}
-
-
-
-//if (ImGui::Button("Generate mesh")) {
-//    if (item_current_idx == 0) {
-//        auto i = Actor(Cube(size));
-//        i.transform.setLocation(transform[0],transform[1], transform[2]);
-//        actors.push_back(i);
-//        
-
-//    }
-
-//    else if (item_current_idx == 1) {
-//        auto i = Actor(Cylinder(size, size * 2, 16));
-//        i.transform.setLocation(transform[0], transform[1], transform[2]);
-//        actors.push_back(i);
-
-//    }
-//    else if (item_current_idx == 2) {
-//        auto i = Actor(Quad());
-//        i.transform.setLocation(transform[0], transform[1], transform[2]);
-//        actors.push_back(i);
-
-//    }
-//    else if (item_current_idx == 3) {
-//        auto i = Actor(Sphere());
-//        i.transform.setLocation(transform[0], transform[1], transform[2]);
-//        actors.push_back(i);
-
-//    }
-//    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-//}
-
-
-//ImGui::Text(selected.c_str());
-
-//if (ImGui::Button("face texture"))
-//    face.bind();
-//if (ImGui::Button("horse texture"))
-//    horse.bind();
 
 
 //ImGui::End();

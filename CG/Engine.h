@@ -3,6 +3,7 @@ class Engine
 {
 	float currentFrame, lastFrame, deltaTime;
 
+	unsigned int renderMode;
 public:
 	void t(double tt) {
 		float currentFrame = static_cast<float>(tt);
@@ -12,5 +13,7 @@ public:
 	float time() {
 		return deltaTime;
 	}
+
+
 };
 
