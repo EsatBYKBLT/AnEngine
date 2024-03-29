@@ -19,6 +19,9 @@
     <Filter Include="Source Files\Shapes">
       <UniqueIdentifier>{02b3b6a9-7bdd-4e89-85b0-49e13a6bed42}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ERay">
+      <UniqueIdentifier>{19a57569-74b6-42be-8c92-b86071ef6d69}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CG.cpp">
@@ -90,6 +93,9 @@
     <ClCompile Include="Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Hittable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">
@@ -157,6 +163,9 @@
     </ClInclude>
     <ClInclude Include="Image.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Hittable.h">
+      <Filter>Header Files\ERay</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
