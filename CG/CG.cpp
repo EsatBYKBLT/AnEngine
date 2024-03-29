@@ -19,6 +19,7 @@
 #include "Vec3.h"
 #include "Ray.h"
 
+#include <cstdint>
 
 void processInput(GLFWwindow* window);
 Renderer renderer;
@@ -26,89 +27,18 @@ Engine engine;
 
 static double lastX = 0, lastY = 0; // Mouse
 
-namespace ERay {
-    bool hitSphere(const Vec3& center, double radius, const Ray& r) {
-        Vec3 oc = r.origin - center;
-        auto rdir = r.direction;
 
-        auto a = rdir.dot(rdir);
-        auto b = 2.0 * oc.dot(r.direction);
-        auto c = oc.dot(oc) - radius * radius;
-        auto discriminant = b * b - 4 * a * c;
+bool hitSphere(const Vec3& center, double radius, const Ray& r) {
+    Vec3 oc = r.origin - center;
+    auto rdir = r.direction;
 
-        return (discriminant >= 0);
-    }
-    void Render(Image& image, float cx=-12, float cy=0, float cz=0) {
-        float bx, by, bz;
-        float radius = 5.0f;
-        bx = 1;
+    auto a = rdir.dot(rdir);
+    auto b = 2.0 * oc.dot(r.direction);
+    auto c = oc.dot(oc) - radius * radius;
+    auto discriminant = b * b - 4 * a * c;
 
-        Vec3 center = Vec3(0,0,0);
-        Ray r;
-        r.origin = Vec3(-cx,cy,cz);
-        Vec3 oc = r.origin - center;
-        Vec3 rdir;
-
-        for (int i = 0; i < image.height; i++) {
-            //std::cout << by << " - " << bz << std::endl;
-
-            for (int j = 0; j < image.width; j++) {
-                by = ((float)j/image.width)*2 -1; // horizontal 
-                bz = ((float)i/image.height)*2 -1; // vertical 
-
-
-                r.direction = Vec3(bx,by,bz);
-                rdir = r.direction;
-
-                float a = rdir.dot(rdir);
-                float b = 2.0 * oc.dot(r.direction);
-                float c = oc.dot(oc) - radius * radius;
-                float discriminant = b * b - 4 * a * c;
-
-
-                if (discriminant >= 0) {
-                    float t = (-b + sqrt(discriminant)) / (2.0 * a);
-
-                    Vec3 N = (r.at(t) - center).normalize();
-                    uint8_t r = (N.x+1) * 127;
-                    uint8_t g = (N.y+1) * 127;
-                    uint8_t b = (N.z+1)*127;
-                    uint8_t a = 255;
-                    uint32_t i32 = r | (g << 8) | (b << 16) | (a << 24);
-
-                    image.at(i, j) = i32;
-
-                }
-
-                else
-                    image.at(i, j) = 0xff000000;
-
-
-            }
-        }
-
-
-    }
-
+    return (discriminant >= 0);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 int main() {
     renderer.Init("An Engine");
@@ -127,7 +57,8 @@ int main() {
     Texture horse("res/horse-face.png"), face("res/tears-of-joy.png");
     
     Image image(600,600);
-    ERay::Render(image);
+    image.fill(0xff55aa55);
+
     //image.fill(0xFF00FF00);
     Texture generated(image);
 
@@ -160,17 +91,16 @@ int main() {
         engine.t(glfwGetTime()); //update time 
 
         processInput(renderer.window);
-       
+
         renderer.clear();
 
         renderer.drawScene(scene);
 
 
 
-        static float ii = 0;
-        static float jj = 0;
-        ii+=0.1; jj += 0.1;
-        ERay::Render(image,-24, sin(ii)*5, 0);
+        static float ii = 0; ii += 0.01;
+        uint8_t r = (sin(ii) + 1) * 128;
+        image.fill(0xff55aa00 | r);
         generated.loadImage(image);
         //ui.texture = &generated;
 
